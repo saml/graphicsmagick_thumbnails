@@ -12,7 +12,6 @@ import flask
 GM=os.path.abspath('./gm_thumbnails')
 CURL='curl'
 WORKDIR=os.path.abspath('./tmp')
-LOGGER = logging.getLogger(__name__)
 
 PARAM_IMAGE_URL='image_url'
 PARAM_QUALITY='quality'
@@ -44,14 +43,14 @@ RESIZE_METHODS = list(enumerate([
 
 app = flask.Flask(__name__)
 
-def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', password='admin', logger=LOGGER):
+def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', password='admin'):
     if dest is None:
         dest = os.path.join(workdir, os.path.basename(url))
     cmd = [curl, '-u', '%s:%s' % (username, password), '-s', '-f', '-o', dest, url]
     p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     out,err = p.communicate()
     if p.returncode != 0:
-        logger.error('%s | while downloading %s -> %s', err, url, dest)
+        app.logger.error('%s | while downloading %s -> %s', err, url, dest)
     return (p,out,err)
 
 
@@ -175,46 +174,6 @@ def make_thumbnails():
 def serve_thumbnails(filename):
     return flask.send_from_directory(WORKDIR, filename)
 
-def main():
-    logging.basicConfig()
-    logger = LOGGER
-    logger.setLevel(logging.INFO)
-
-    image_url = 'http://localhost:4502/content/dam/fashion/test/LillyJessMason_SalesStudentjpg.jpg'
-    json_url = image_url + '/jcr:content/renditions.-1.json'
-    parsed = urlparse.urlparse(image_url)
-    
-    dir_path = os.path.dirname(parsed.path)
-    if dir_path.startswith('/'):
-        dir_path = dir_path[1:]
-
-    basedir = os.path.join(WORKDIR, parsed.netloc, dir_path)
-
-    if not os.path.exists(basedir):
-        logger.debug('making dir: %s', basedir)
-        os.makedirs(basedir)
-
-    image_name = os.path.basename(parsed.path)
-    image_path = os.path.join(basedir, image_name)
-    json_path = os.path.join(basedir, image_name + '.json')
-
-    download_file(image_url, image_path)
-    download_file(json_url, json_path)
-
-    with open(json_path, 'r') as f:
-        renditions = json.load(f)
-        for rendition_name,rendition in renditions.iteritems():
-            try:
-                if type(rendition) == dict and rendition['nym:shouldCrop']:
-                    crop_x = rendition['nym:cropX']
-                    crop_y = rendition['nym:cropY']
-                    crop_w = rendition['nym:cropWidth']
-                    crop_h = rendition['nym:cropHeight']
-                    width = rendition['nym:width']
-                    height = rendition['nym:height']
-                    print('%dx%d+%d+%d+%dx%d' % (crop_w, crop_h, crop_x, crop_y, width, height))
-            except KeyError:
-                pass
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
