@@ -4,3 +4,4 @@ gm_thumbnails
 tmp/
 *.o
 *.pyc
+sandbox/
