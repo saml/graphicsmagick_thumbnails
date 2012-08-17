@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet" />
+        <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet" />
+    </head>
+    <body>
+        {% block body %}
+        <form action="/thumbnails" method="POST">
+            cq image url <input class="span12" type="text" width="100%" name="{{ PARAM_IMAGE_URL }}" value="http://author01.dev.nymag.biz:4502/content/dam/fashion/test/72.jpg" /><br />
+            quality <input type="text" name="{{ PARAM_QUALITY }}" value="70" /><br />
+            <fieldset>
+                resize method
+                <select name="{{ PARAM_RESIZE_METHOD }}">
+                    <option value="1" selected> Thumbnail</option>
+                    <option value="2"> Scale</option>
+                    <option value="3"> Sample</option>
+                    <option value="4"> Point</option>
+                    <option value="5"> Box</option>
+                    <option value="6"> Triangle</option>
+                    <option value="7"> Hermite</option>
+                    <option value="8"> Hanning</option>
+                    <option value="9"> Hamming</option>
+                    <option value="10"> Blackman</option>
+                    <option value="11"> Gaussian</option>
+                    <option value="12"> Quadratic</option>
+                    <option value="13"> Cubic</option>
+                    <option value="14"> Catrom</option>
+                    <option value="15"> Mitchell</option>
+                    <option value="17"> Lanczos</option>
+                    <option value="18"> Bessel</option>
+                    <option value="19"> Sinc</option>
+                </select><br />
+                blur <input type="text" name="{{ PARAM_BLUR }}" value="1.0" />
+            </fieldset>
+            <br />
+            <input type="submit" value="Generate Thumbnails" />
+        </form>
+        {% endblock %}
+    </body>
+</html>

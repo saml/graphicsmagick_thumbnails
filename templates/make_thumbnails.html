@@ -1,0 +1,21 @@
+{% extends "index.html" %}
+
+{% block body %}
+    {% if error_msg %}
+        <div class="error">{{ error_msg }}</div>
+    {% endif %}
+    {% for spec in rendition_specs %}
+    <table>
+        <tr>
+            <td>
+                <img src="{{ spec.original_url }}">
+            </td>
+            <td>
+                <img src="{{ spec.rendition_url }}">
+                {{ spec.rendition_size }}
+            </td>
+        </tr>
+
+    </table>
+    {% endfor %}
+{% endblock %}
