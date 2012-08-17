@@ -1,0 +1,5 @@
+*.jpg
+a.out
+gm_thumbnails
+tmp/
+*.o
