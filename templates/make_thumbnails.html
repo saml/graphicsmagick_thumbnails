@@ -6,28 +6,42 @@
     {% endif %}
 
     <h1>{{ image_url }}<h1>
-    <div>
-        quality: {{ quality }}
-    </div>
-    <div>
-        blur: {{ blur }}
-    </div>
-    <div>
-        resize method: {{ resize_method }}
-    </div>
-    {% for spec in rendition_specs %}
+    <div>took: {{ took }}</div>
+
+    {% for specs in rendition_specs %}
     <table>
         <tr>
+            {% for spec in specs %}
             <td>
-                <img src="{{ spec.original_url }}" title="cq">
+                <table style="font-size: small;">
+                    <tr>
+                        <td>
+                            <img src="{{ spec.rendition_url }}" title="{{ spec.spec }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{ spec.rendition_size }} KB
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Quality: {{ spec.quality }} %
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Blur: {{ spec.blur }} 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Resize: {{ spec.resize_method }} 
+                        </td>
+                    </tr>
+                </table>
             </td>
-            <td>
-                <img src="{{ spec.rendition_url }}" title="rengen">
-            </td>
-        </tr>
-        <tr>
-            <td>CQ</td>
-            <td>{{ spec.rendition_size }} KB</td>
+            {% endfor %}
         </tr>
 
     </table>

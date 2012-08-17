@@ -5,6 +5,7 @@ import os
 import argparse
 import urlparse
 import logging
+import datetime
 
 import flask
 
@@ -17,6 +18,8 @@ PARAM_IMAGE_URL='image_url'
 PARAM_QUALITY='quality'
 PARAM_RESIZE_METHOD='resize_method'
 PARAM_BLUR='blur'
+
+SETS = ['1', '2']
 
 RESIZE_METHODS = list(enumerate([
     'Thumbnail',
@@ -54,12 +57,15 @@ def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', 
 
 
 class RenditionSpec(object):
-    def __init__(self, dimension, spec, rendition_path, rendition_url, original_url):
+    def __init__(self, dimension, spec, rendition_path, rendition_url, original_url, resize_method, blur, quality):
         self.spec = spec
         self.rendition_path = rendition_path
         self.rendition_url = rendition_url
         self.original_url = original_url
         self.rendition_size = None
+        self.resize_method = resize_method
+        self.blur = blur
+        self.quality = quality
         self.rendition_dimension = dimension 
 
 
@@ -69,11 +75,12 @@ class RenditionSpec(object):
 
 def generate_thumbnails(image_path, rendition_specs):
     cmd = [GM, image_path]
-    for spec in rendition_specs:
-        cmd.append('-f')
-        cmd.append(spec.spec)
-        cmd.append('-o')
-        cmd.append(spec.rendition_path)
+    for specs in rendition_specs:
+        for spec in specs:
+            cmd.append('-f')
+            cmd.append(spec.spec)
+            cmd.append('-o')
+            cmd.append(spec.rendition_path)
     app.logger.debug(' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out,err = p.communicate()
@@ -97,9 +104,14 @@ def make_thumbnails():
     if len(ext) < 2: #image_url has extension. ends with .X
         return flask.render_template('make_thumbnails.html', error_msg='not a valid image url: %s' % image_url)
 
-    quality = int(flask.request.form[PARAM_QUALITY], 10)
-    blur = float(flask.request.form[PARAM_BLUR])
-    resize_method = int(flask.request.form[PARAM_RESIZE_METHOD], 10)
+    quality = {}
+    blur = {}
+    resize_method = {}
+
+    for i in SETS:
+        quality[i] = int(flask.request.form[PARAM_QUALITY + i], 10)
+        blur[i] = float(flask.request.form[PARAM_BLUR + i])
+        resize_method[i] = int(flask.request.form[PARAM_RESIZE_METHOD + i], 10)
 
 
     json_url = image_url + '/jcr:content/renditions.-1.json'
@@ -131,24 +143,33 @@ def make_thumbnails():
                     crop_h = rendition['nym:cropHeight']
                     width = rendition['nym:width']
                     height = rendition['nym:height']
-                    spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method, blur, quality)
-                    spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name)
-                    rendition_specs.append(spec)
+
+                    specs = []
+                    for i in SETS:
+                        spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method[i], blur[i], quality[i])
+                        spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name, RESIZE_METHODS[resize_method[i]][1], blur[i], quality[i])
+                        specs.append(spec)
+
+                    rendition_specs.append(specs)
             except KeyError:
                 pass
 
-    rendition_specs.sort(lambda x,y: cmp(x.rendition_dimension, y.rendition_dimension))
+    rendition_specs.sort(lambda x,y: cmp(x[0].rendition_dimension, y[0].rendition_dimension))
+    
+    t = datetime.datetime.now()
     p,out,err = generate_thumbnails(image_path, rendition_specs)
     if p.returncode:
         return flask.render_template('make_thumbnails.html', error_msg=err)
+    took = datetime.datetime.now() - t
 
-    for spec in rendition_specs:
-        try:
-            spec.rendition_size = os.path.getsize(spec.rendition_path) / (2 ** 10)
-        except:
-            pass
+    for specs in rendition_specs:
+        for spec in specs:
+            try:
+                spec.rendition_size = os.path.getsize(spec.rendition_path) / (2 ** 10)
+            except:
+                pass
     
-    return flask.render_template('make_thumbnails.html', image_url=image_url, quality=quality, blur=blur, resize_method=RESIZE_METHODS[resize_method][1], rendition_specs=rendition_specs)
+    return flask.render_template('make_thumbnails.html', took=took, image_url=image_url, rendition_specs=rendition_specs)
 
 @app.route("/thumbnails/<path:filename>")
 def serve_thumbnails(filename):

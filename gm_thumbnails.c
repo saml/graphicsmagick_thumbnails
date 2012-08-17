@@ -80,7 +80,7 @@ Image* generate_rendition(Image *const image, ImageInfo const*image_info, char c
     FilterTypes filter;
     ImageInfo *rendition_info;
 
-    if (sscanf(spec, "%lux%lu+%lu+%lu+%lux%lu+%u+%f+%u", &crop_width, &crop_height, &crop_x, &crop_y, &width, &height, &resize, &blur, &quality)) {
+    if (sscanf(spec, "%lux%lu+%lu+%lu+%lux%lu+%u+%lf+%u", &crop_width, &crop_height, &crop_x, &crop_y, &width, &height, &resize, &blur, &quality)) {
         if (width > 0 && height > 0) {
             if (crop_width > 0 && crop_height > 0) {
                 geometry.x = crop_x;
@@ -138,10 +138,12 @@ Image* generate_rendition(Image *const image, ImageInfo const*image_info, char c
             strncpy(resized->filename, rendition_path, MaxTextExtent);
             if (!WriteImage(rendition_info, resized)) {
                 CatchException(exception);
+                DestroyImageInfo(rendition_info);
                 return NULL;
             }
             printf("wrote %s\n", resized->filename);
-
+            
+            DestroyImageInfo(rendition_info);
             return resized;
 
         }

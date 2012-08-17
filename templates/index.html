@@ -8,17 +8,23 @@
         {% block body %}
         <form action="/thumbnails" method="POST">
             cq image url <input class="span12" type="text" width="100%" name="{{ PARAM_IMAGE_URL }}" value="http://author01.dev.nymag.biz:4502/content/dam/fashion/test/72.jpg" /><br />
-            quality <input type="text" name="{{ PARAM_QUALITY }}" value="70" /><br />
-            <fieldset>
-                resize method
-                <select name="{{ PARAM_RESIZE_METHOD }}">
-                    {% for i,resize_method in RESIZE_METHODS %}
-                        <option value="{{ i }}">{{ resize_method }}</option>
-                    {% endfor %}
-                </select><br />
-                blur <input type="text" name="{{ PARAM_BLUR }}" value="1.0" />
-            </fieldset>
-            <br />
+
+            {% for i in [1,2] %}
+            <label>{{ i }}</label>
+            quality <input type="text" name="{{ PARAM_QUALITY }}{{ i }}" value="70" /><br />
+                <fieldset>
+                    resize method
+                    <select name="{{ PARAM_RESIZE_METHOD }}{{ i }}">
+                        {% for i,resize_method in RESIZE_METHODS %}
+                            <option value="{{ i }}">{{ resize_method }}</option>
+                        {% endfor %}
+                    </select><br />
+                    blur <input type="text" name="{{ PARAM_BLUR }}{{ i }}" value="1.0" />
+                </fieldset>
+                <br />
+                <hr />
+            {% endfor %}
+
             <input type="submit" value="Generate Thumbnails" />
         </form>
         {% endblock %}
