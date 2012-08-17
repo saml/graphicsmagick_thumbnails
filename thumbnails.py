@@ -18,6 +18,27 @@ PARAM_QUALITY='quality'
 PARAM_RESIZE_METHOD='resize_method'
 PARAM_BLUR='blur'
 
+RESIZE_METHODS = list(enumerate([
+    'Thumbnail',
+    'Scale',
+    'Sample',
+    'Point',
+    'Box',
+    'Triangle',
+    'Hermite',
+    'Hanning',
+    'Hamming',
+    'Blackman',
+    'Gaussian',
+    'Quadratic',
+    'Cubic',
+    'Catrom',
+    'Mitchell',
+    'Lanczos',
+    'Bessel',
+    'Sinc'
+]))
+
 app = flask.Flask(__name__)
 
 def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', password='admin', logger=LOGGER):
@@ -30,13 +51,16 @@ def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', 
         logger.error('%s | while downloading %s -> %s', err, url, dest)
     return (p,out,err)
 
+
+
 class RenditionSpec(object):
-    def __init__(self, spec, rendition_path, rendition_url, original_url):
+    def __init__(self, dimension, spec, rendition_path, rendition_url, original_url):
         self.spec = spec
         self.rendition_path = rendition_path
         self.rendition_url = rendition_url
         self.original_url = original_url
         self.rendition_size = None
+        self.rendition_dimension = dimension 
 
 
     def __str__(self):
@@ -60,6 +84,7 @@ def generate_thumbnails(image_path, rendition_specs):
 @app.route("/", methods=['GET'])
 def index():
     return flask.render_template('index.html', 
+            RESIZE_METHODS = RESIZE_METHODS,
             PARAM_IMAGE_URL=PARAM_IMAGE_URL,
             PARAM_QUALITY=PARAM_QUALITY,
             PARAM_RESIZE_METHOD=PARAM_RESIZE_METHOD,
@@ -107,23 +132,23 @@ def make_thumbnails():
                     width = rendition['nym:width']
                     height = rendition['nym:height']
                     spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method, blur, quality)
-                    spec = RenditionSpec(spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path), image_url + '/jcr:content/renditions/' + rendition_name)
+                    spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name)
                     rendition_specs.append(spec)
             except KeyError:
                 pass
 
-
+    rendition_specs.sort(lambda x,y: cmp(x.rendition_dimension, y.rendition_dimension))
     p,out,err = generate_thumbnails(image_path, rendition_specs)
     if p.returncode:
         return flask.render_template('make_thumbnails.html', error_msg=err)
 
     for spec in rendition_specs:
         try:
-            spec.rendition_size = os.path.getsize(spec.rendition_path)
+            spec.rendition_size = os.path.getsize(spec.rendition_path) / (2 ** 10)
         except:
             pass
     
-    return flask.render_template('make_thumbnails.html', rendition_specs=rendition_specs)
+    return flask.render_template('make_thumbnails.html', image_url=image_url, quality=quality, blur=blur, resize_method=RESIZE_METHODS[resize_method][1], rendition_specs=rendition_specs)
 
 @app.route("/thumbnails/<path:filename>")
 def serve_thumbnails(filename):

@@ -4,15 +4,28 @@
     {% if error_msg %}
         <div class="error">{{ error_msg }}</div>
     {% endif %}
+
+    <h1>{{ image_url }}<h1>
+    <div>
+        quality: {{ quality }}
+    </div>
+    <div>
+        blur: {{ blur }}
+    </div>
+    <div>
+        resize method: {{ resize_method }}
+    </div>
     {% for spec in rendition_specs %}
     <table>
         <tr>
             <td>
-                <img src="{{ spec.original_url }}">
+                <img src="{{ spec.original_url }}" title="cq">
             </td>
             <td>
-                <img src="{{ spec.rendition_url }}">
-                {{ spec.rendition_size }}
+                <img src="{{ spec.rendition_url }}" title="rengen">
+            </td>
+            <td>
+                {{ spec.rendition_size }} KB
             </td>
         </tr>
 

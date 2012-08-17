@@ -12,24 +12,9 @@
             <fieldset>
                 resize method
                 <select name="{{ PARAM_RESIZE_METHOD }}">
-                    <option value="1" selected> Thumbnail</option>
-                    <option value="2"> Scale</option>
-                    <option value="3"> Sample</option>
-                    <option value="4"> Point</option>
-                    <option value="5"> Box</option>
-                    <option value="6"> Triangle</option>
-                    <option value="7"> Hermite</option>
-                    <option value="8"> Hanning</option>
-                    <option value="9"> Hamming</option>
-                    <option value="10"> Blackman</option>
-                    <option value="11"> Gaussian</option>
-                    <option value="12"> Quadratic</option>
-                    <option value="13"> Cubic</option>
-                    <option value="14"> Catrom</option>
-                    <option value="15"> Mitchell</option>
-                    <option value="17"> Lanczos</option>
-                    <option value="18"> Bessel</option>
-                    <option value="19"> Sinc</option>
+                    {% for i,resize_method in RESIZE_METHODS %}
+                        <option value="{{ i }}">{{ resize_method }}</option>
+                    {% endfor %}
                 </select><br />
                 blur <input type="text" name="{{ PARAM_BLUR }}" value="1.0" />
             </fieldset>
