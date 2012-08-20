@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if (( $# < 1 ))
+then
+    echo "Usage: $0 <port> [htdocs]"
+    exit 1
+fi
+
+port="$1"
+htdocs="${2:-.}"
+THTTPD="$HOME/opt/thttpd"
+
+echo "$THTTPD/thttpd" -i "$THTTPD/pid" -M 1 -d "$htdocs" -p "$port"  -l "$THTTPD/thttpd.log" -t "$THTTPD/throttles.conf" || echo "bad"
+"$THTTPD/thttpd" -i "$THTTPD/pid" -M 1 -d "$htdocs" -p "$port"  -l "$THTTPD/thttpd.log" -t "$THTTPD/throttles.conf" || echo "bad"

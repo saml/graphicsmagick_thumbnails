@@ -1,0 +1,4 @@
+#!/bin/bash
+
+THTTPD="$HOME/opt/thttpd"
+kill "$(cat "$THTTPD/pid")" && rm "$THTTPD/pid"
