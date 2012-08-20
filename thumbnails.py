@@ -18,6 +18,7 @@ PARAM_QUALITY='quality'
 PARAM_RESIZE_METHOD='resize_method'
 PARAM_BLUR='blur'
 PARAM_IS_PROGRESSIVE='progressive'
+CDN='http://10.176.200.221:8081' 
 
 SETS = ['1', '2']
 
@@ -90,10 +91,12 @@ def generate_thumbnails(image_path, rendition_specs):
 
 @app.route("/", methods=['GET'])
 def index():
+    image_url = flask.request.args.get(PARAM_IMAGE_URL, '')
     return flask.render_template('index.html',
             SETS = SETS,
             RESIZE_METHODS = RESIZE_METHODS,
             PARAM_IMAGE_URL=PARAM_IMAGE_URL,
+            image_url=image_url,
             PARAM_QUALITY=PARAM_QUALITY,
             PARAM_RESIZE_METHOD=PARAM_RESIZE_METHOD,
             PARAM_BLUR=PARAM_BLUR,
@@ -150,7 +153,7 @@ def make_thumbnails():
                     specs = []
                     for i in SETS:
                         spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method[i], blur[i], quality[i], is_progressive[i])
-                        spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name, RESIZE_METHODS[resize_method[i]][1], blur[i], quality[i], is_progressive[i])
+                        spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/tmp', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name, RESIZE_METHODS[resize_method[i]][1], blur[i], quality[i], is_progressive[i])
                         specs.append(spec)
 
                     rendition_specs.append(specs)
@@ -161,7 +164,7 @@ def make_thumbnails():
     
     t = datetime.datetime.now()
     p,out,err = generate_thumbnails(image_path, rendition_specs)
-    app.logger.debug(out)
+    #app.logger.debug(out)
     if p.returncode:
         return flask.render_template('make_thumbnails.html', error_msg=err)
 
@@ -174,7 +177,7 @@ def make_thumbnails():
             except:
                 pass
     
-    return flask.render_template('make_thumbnails.html', took=took, image_url=image_url, rendition_specs=rendition_specs)
+    return flask.render_template('make_thumbnails.html', CDN=CDN, took=took, image_url=image_url, rendition_specs=rendition_specs)
 
 @app.route("/thumbnails/<path:filename>")
 def serve_thumbnails(filename):

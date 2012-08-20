@@ -8,7 +8,7 @@
     <body>
         {% block body %}
         <form action="/thumbnails" method="POST">
-            cq image url <input class="span12" type="text" width="100%" name="{{ PARAM_IMAGE_URL }}" value="" /><br />
+            cq image url <input class="span12" type="text" width="100%" name="{{ PARAM_IMAGE_URL }}" value="{{ image_url }}" /><br />
 
             {% for i in SETS %}
                 <label>{{ i }}</label>
