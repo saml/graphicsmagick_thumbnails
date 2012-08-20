@@ -170,8 +170,10 @@ int main(int argc, char *argv[]) {
 
     char opt;
     char const* usage = 
-        "Usage: %s <original_image_path> -f <crop_width>x<crop_height>+<crop_x>+<crop_y>+<resize_width>x<resize_height>+<resize_method>+<blur>+<quality> -o <output>\n"
-        "-f 2592x1728+0+311+300x200+0+0.5+80\n"
+        "Usage: %s <original_image_path> -f <crop_width>x<crop_height>+<crop_x>+<crop_y>+<resize_width>x<resize_height>+<resize_method>+<blur>+<quality>+<progressive> -o <output> [-f ... -o ...]\n"
+        "normally, use 0 for resize_method, and 1 for blur.\n"
+        "progressive 80%% compression 0.5 blur 300x200 thumbnail: -f 2592x1728+0+311+300x200+0+0.5+80+1\n"
+        "non progressive 70%% compression 1.0 blur 300x200 thumbnail: -f 2592x1728+0+311+300x200+0+1+70+0\n"
         ;
     
     Image *original_image;
