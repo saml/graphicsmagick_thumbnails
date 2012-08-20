@@ -17,6 +17,7 @@ PARAM_IMAGE_URL='image_url'
 PARAM_QUALITY='quality'
 PARAM_RESIZE_METHOD='resize_method'
 PARAM_BLUR='blur'
+PARAM_IS_PROGRESSIVE='progressive'
 
 SETS = ['1', '2']
 
@@ -56,7 +57,7 @@ def download_file(url, dest=None, workdir=WORKDIR, curl=CURL, username='admin', 
 
 
 class RenditionSpec(object):
-    def __init__(self, dimension, spec, rendition_path, rendition_url, original_url, resize_method, blur, quality):
+    def __init__(self, dimension, spec, rendition_path, rendition_url, original_url, resize_method, blur, quality, is_progressive):
         self.spec = spec
         self.rendition_path = rendition_path
         self.rendition_url = rendition_url
@@ -66,7 +67,7 @@ class RenditionSpec(object):
         self.blur = blur
         self.quality = quality
         self.rendition_dimension = dimension 
-
+        self.is_progressive = is_progressive
 
     def __str__(self):
         return 'RenditionSpec("%s","%s")' % (self.spec, self.rendition_path)
@@ -89,12 +90,14 @@ def generate_thumbnails(image_path, rendition_specs):
 
 @app.route("/", methods=['GET'])
 def index():
-    return flask.render_template('index.html', 
+    return flask.render_template('index.html',
+            SETS = SETS,
             RESIZE_METHODS = RESIZE_METHODS,
             PARAM_IMAGE_URL=PARAM_IMAGE_URL,
             PARAM_QUALITY=PARAM_QUALITY,
             PARAM_RESIZE_METHOD=PARAM_RESIZE_METHOD,
-            PARAM_BLUR=PARAM_BLUR)
+            PARAM_BLUR=PARAM_BLUR,
+            PARAM_IS_PROGRESSIVE=PARAM_IS_PROGRESSIVE)
 
 @app.route("/thumbnails", methods=['POST'])
 def make_thumbnails():
@@ -106,12 +109,13 @@ def make_thumbnails():
     quality = {}
     blur = {}
     resize_method = {}
+    is_progressive = {}
 
     for i in SETS:
         quality[i] = int(flask.request.form[PARAM_QUALITY + i], 10)
         blur[i] = float(flask.request.form[PARAM_BLUR + i])
         resize_method[i] = int(flask.request.form[PARAM_RESIZE_METHOD + i], 10)
-
+        is_progressive[i] = 1 if flask.request.form.get(PARAM_IS_PROGRESSIVE + i, '') == 'on' else 0
 
     json_url = image_url + '/jcr:content/renditions.-1.json'
     parsed = urlparse.urlparse(image_url)
@@ -145,8 +149,8 @@ def make_thumbnails():
 
                     specs = []
                     for i in SETS:
-                        spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method[i], blur[i], quality[i])
-                        spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name, RESIZE_METHODS[resize_method[i]][1], blur[i], quality[i])
+                        spec_str = '%dx%d+%d+%d+%dx%d+%d+%d+%d+%d' % (crop_w, crop_h, crop_x, crop_y, width, height, resize_method[i], blur[i], quality[i], is_progressive[i])
+                        spec = RenditionSpec(width * height, spec_str, os.path.join(basedir, spec_str + ext), os.path.join('/thumbnails', relative_path, spec_str + ext), image_url + '/jcr:content/renditions/' + rendition_name, RESIZE_METHODS[resize_method[i]][1], blur[i], quality[i], is_progressive[i])
                         specs.append(spec)
 
                     rendition_specs.append(specs)
@@ -157,8 +161,10 @@ def make_thumbnails():
     
     t = datetime.datetime.now()
     p,out,err = generate_thumbnails(image_path, rendition_specs)
+    app.logger.debug(out)
     if p.returncode:
         return flask.render_template('make_thumbnails.html', error_msg=err)
+
     took = datetime.datetime.now() - t
 
     for specs in rendition_specs:

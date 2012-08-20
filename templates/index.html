@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+    <meta charset="utf-8" />
     <head>
         <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet" />
         <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet" />
@@ -9,9 +10,9 @@
         <form action="/thumbnails" method="POST">
             cq image url <input class="span12" type="text" width="100%" name="{{ PARAM_IMAGE_URL }}" value="" /><br />
 
-            {% for i in [1,2] %}
-            <label>{{ i }}</label>
-            quality <input type="text" name="{{ PARAM_QUALITY }}{{ i }}" value="70" /><br />
+            {% for i in SETS %}
+                <label>{{ i }}</label>
+                quality <input type="text" name="{{ PARAM_QUALITY }}{{ i }}" value="70" /><br />
                 <fieldset>
                     resize method
                     <select name="{{ PARAM_RESIZE_METHOD }}{{ i }}">
@@ -22,6 +23,7 @@
                     blur <input type="text" name="{{ PARAM_BLUR }}{{ i }}" value="1.0" />
                 </fieldset>
                 <br />
+                progressive <input type="checkbox" name="{{ PARAM_IS_PROGRESSIVE }}{{ i }}" value="on" /><br />
                 <hr />
             {% endfor %}
 

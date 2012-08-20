@@ -74,13 +74,14 @@ Image* generate_rendition(Image *const image, ImageInfo const*image_info, char c
     unsigned int quality;
     unsigned int resize;
     double blur;
+    unsigned int is_progressive;
     Image const* cropped;
     Image *resized;
     RectangleInfo geometry;
     FilterTypes filter;
     ImageInfo *rendition_info;
 
-    if (sscanf(spec, "%lux%lu+%lu+%lu+%lux%lu+%u+%lf+%u", &crop_width, &crop_height, &crop_x, &crop_y, &width, &height, &resize, &blur, &quality)) {
+    if (sscanf(spec, "%lux%lu+%lu+%lu+%lux%lu+%u+%lf+%u+%u", &crop_width, &crop_height, &crop_x, &crop_y, &width, &height, &resize, &blur, &quality, &is_progressive)) {
         if (width > 0 && height > 0) {
             if (crop_width > 0 && crop_height > 0) {
                 geometry.x = crop_x;
@@ -136,6 +137,12 @@ Image* generate_rendition(Image *const image, ImageInfo const*image_info, char c
             rendition_info = CloneImageInfo(image_info);
             rendition_info->quality = quality;
             strncpy(resized->filename, rendition_path, MaxTextExtent);
+            
+            if (is_progressive) {
+                rendition_info->interlace = LineInterlace;    
+                printf("progressive: %s\n", rendition_path);
+            }
+
             if (!WriteImage(rendition_info, resized)) {
                 CatchException(exception);
                 DestroyImageInfo(rendition_info);
@@ -156,7 +163,6 @@ Image* generate_rendition(Image *const image, ImageInfo const*image_info, char c
 int main(int argc, char *argv[]) {
     char *original_image_path;
     char rendition_spec[MaxTextExtent] = {0};
-    char rendition_path[MaxTextExtent] = {0};
     int is_rendition_generated = 0;
     
     int return_code = 0;
@@ -204,7 +210,9 @@ int main(int argc, char *argv[]) {
     while ((opt = getopt(argc, argv, "f:o:")) != -1) {
         switch (opt) {
             case 'o':
-                generate_rendition(original_image, image_info, rendition_spec, optarg, &exception);
+                if (!generate_rendition(original_image, image_info, rendition_spec, optarg, &exception)) {
+                    fprintf(stderr, "%s : during %s -> %s (%s)\n", exception.reason, original_image_path, rendition_spec, optarg);
+                }
                 break;
             case 'f':
                 strncpy(rendition_spec, optarg, MaxTextExtent);
